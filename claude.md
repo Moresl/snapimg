@@ -118,6 +118,25 @@ npm run dev
 - Footer 固定在页面底部（flex 布局）
 - 按钮使用简洁默认样式
 
+### 压缩库升级
+
+**PNG 压缩升级:**
+- 使用 `imagequant` (libimagequant Python 绑定)
+- pngquant / TinyPNG 同款算法
+- 比 Pillow FASTOCTREE 压缩率更高、质量更好
+
+**JPEG 压缩升级:**
+- 使用 `mozjpeg-lossless-optimization` 后处理
+- 无损优化，额外减少 5-15% 体积
+
+**新增依赖:**
+```
+imagequant
+mozjpeg-lossless-optimization
+```
+
+**兼容性:** 两个库都使用 try/except 导入，失败时自动回退到 Pillow
+
 ### 依赖
 
 **后端 (pip):**

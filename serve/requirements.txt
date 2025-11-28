@@ -3,3 +3,5 @@ uvicorn
 python-multipart
 Pillow
 pydantic
+imagequant
+mozjpeg-lossless-optimization

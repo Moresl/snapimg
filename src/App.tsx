@@ -1,4 +1,4 @@
-import { Github, ImageIcon, Download, CheckCircle, XCircle, Eye, Loader2, Sun, Moon } from 'lucide-react'
+import { Github, Download, CheckCircle, XCircle, Eye, Loader2, Sun, Moon } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import JSZip from 'jszip'
 import { UploadZone } from './components/UploadZone'
@@ -190,9 +190,14 @@ function App() {
       <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-lg">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-              <ImageIcon className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" className="fill-primary"/>
+              <rect x="6" y="8" width="14" height="12" rx="2" fill="white" opacity="0.9"/>
+              <circle cx="10" cy="12" r="1.5" className="fill-primary"/>
+              <path d="M6 17 L11 14 L14 16 L20 11" className="stroke-primary" strokeWidth="1.5" fill="none"/>
+              <path d="M22 16 L26 20 M26 16 L22 20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M19 22 L26 22 L26 25 L19 25 Z" fill="white" opacity="0.7"/>
+            </svg>
             <div>
               <h1 className="text-xl font-bold">图片压缩</h1>
               <p className="text-xs text-muted-foreground">高效压缩 · 保持质量</p>

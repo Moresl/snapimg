@@ -1,17 +1,32 @@
 """
 高级图片压缩引擎
-使用纯 Python 实现，无需外部程序，方便打包
+使用 imagequant (libimagequant) 和 mozjpeg 实现高质量压缩
 """
 import io
 import os
 from typing import Tuple, Optional
-from PIL import Image, ImageFile, ImageOps
+from PIL import Image, ImageFile
 from pathlib import Path
 
+# 可选依赖
 try:
     import pillow_avif
 except ImportError:
     pass  # AVIF 支持可选
+
+try:
+    import imagequant
+    HAS_IMAGEQUANT = True
+except ImportError:
+    HAS_IMAGEQUANT = False
+    print("[警告] imagequant 未安装，PNG 将使用 Pillow 默认压缩")
+
+try:
+    import mozjpeg_lossless_optimization
+    HAS_MOZJPEG = True
+except ImportError:
+    HAS_MOZJPEG = False
+    print("[警告] mozjpeg-lossless-optimization 未安装，JPEG 将使用 Pillow 默认压缩")
 
 # 允许加载截断的图片
 ImageFile.LOAD_TRUNCATED_IMAGES = True
@@ -84,104 +99,85 @@ class AdvancedCompressor:
         return original_size, compressed_size, compression_ratio
 
     def _compress_png(self, img: Image.Image, output_path: str, quality: int, use_pngquant: bool):
-        """PNG 压缩 - 纯 Python 实现，平衡质量和压缩率"""
+        """PNG 压缩 - 使用 imagequant (libimagequant) 实现高质量压缩"""
 
-        if use_pngquant:
+        if not use_pngquant:
+            # 无损压缩
+            img.save(output_path, 'PNG', optimize=True, compress_level=9)
+            return
+
+        # 根据质量参数决定颜色数量
+        max_colors = 256 if quality >= 75 else 128
+
+        if HAS_IMAGEQUANT:
             try:
-                # 根据质量参数决定颜色数量（平衡质量和大小）
-                # TinyPNG 使用约 256 色
-                if quality >= 90:
-                    max_colors = 256
-                elif quality >= 85:
-                    max_colors = 256  # 默认 85 质量也用 256 色，保证质量
-                elif quality >= 75:
-                    max_colors = 200
-                else:
-                    max_colors = 128
+                # 使用 imagequant (libimagequant) - pngquant/TinyPNG 同款算法
+                if img.mode not in ('RGBA', 'RGB'):
+                    img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
-                print(f"[PNG压缩] 原始模式: {img.mode}, 大小: {img.size}")
-
-                # 检查透明通道
-                has_alpha = img.mode in ('RGBA', 'LA') or (
-                    img.mode == 'P' and 'transparency' in img.info
+                # imagequant 量化
+                result = imagequant.quantize_pil_image(
+                    img,
+                    dithering_level=1.0,  # Floyd-Steinberg 抖动
+                    max_colors=max_colors,
+                    min_quality=0,
+                    max_quality=100
                 )
 
-                if has_alpha:
-                    # 有透明通道：使用 FASTOCTREE 方法量化
-                    if img.mode != 'RGBA':
-                        img = img.convert('RGBA')
-
-                    # RGBA 必须使用 FASTOCTREE 或 MAXCOVERAGE 方法
-                    img_quantized = img.quantize(
-                        colors=max_colors,
-                        method=Image.Quantize.FASTOCTREE,  # RGBA 必须用这个方法
-                        dither=Image.Dither.FLOYDSTEINBERG
-                    )
-
-                    # 转回 RGBA 保持质量
-                    img_rgba = img_quantized.convert('RGBA')
-
-                    # 保存为优化的 PNG
-                    img_rgba.save(
-                        output_path,
-                        'PNG',
-                        optimize=True,
-                        compress_level=9
-                    )
-                    print(f"[PNG压缩] 有透明通道，FASTOCTREE 量化为 {max_colors} 色，RGBA 模式")
-
-                else:
-                    # 无透明通道：使用调色板压缩
-                    if img.mode != 'RGB':
-                        img = img.convert('RGB')
-
-                    # 使用自适应调色板（质量更好）
-                    img_quantized = img.convert('P', palette=Image.Palette.ADAPTIVE, colors=max_colors)
-
-                    # 保存为 PNG8
-                    img_quantized.save(
-                        output_path,
-                        'PNG',
-                        optimize=True,
-                        compress_level=9
-                    )
-                    print(f"[PNG压缩] 无透明通道，自适应调色板 {max_colors} 色，P 模式")
-
+                # 保存
+                result.save(output_path, 'PNG', optimize=True, compress_level=9)
+                print(f"[PNG压缩] imagequant 量化为 {max_colors} 色")
+                return
             except Exception as e:
-                print(f"[PNG压缩] 量化失败: {e}，使用备用方案")
-                # 备用方案：尝试调色板转换
-                try:
-                    if img.mode == 'RGB':
-                        img_p = img.convert('P', palette=Image.Palette.ADAPTIVE, colors=256)
-                        img_p.save(output_path, 'PNG', optimize=True, compress_level=9)
-                    elif img.mode == 'RGBA':
-                        # RGBA 先量化再保存
-                        img_p = img.quantize(colors=256)
-                        img_p.save(output_path, 'PNG', optimize=True, compress_level=9)
-                    else:
-                        img.save(output_path, 'PNG', optimize=True, compress_level=9)
-                except Exception as e2:
-                    print(f"[PNG压缩] 备用方案也失败: {e2}，使用基础保存")
-                    img.save(output_path, 'PNG', optimize=True, compress_level=9)
-        else:
-            # 无损压缩
-            img.save(
-                output_path,
-                'PNG',
-                optimize=True,
-                compress_level=9
-            )
+                print(f"[PNG压缩] imagequant 失败: {e}，使用 Pillow 备用")
+
+        # Pillow 备用方案
+        self._compress_png_pillow(img, output_path, max_colors)
+
+    def _compress_png_pillow(self, img: Image.Image, output_path: str, max_colors: int):
+        """Pillow PNG 压缩备用方案"""
+        try:
+            has_alpha = img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info)
+
+            if has_alpha:
+                if img.mode != 'RGBA':
+                    img = img.convert('RGBA')
+                img_q = img.quantize(colors=max_colors, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.FLOYDSTEINBERG)
+                img_q.convert('RGBA').save(output_path, 'PNG', optimize=True, compress_level=9)
+            else:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                img_q = img.convert('P', palette=Image.Palette.ADAPTIVE, colors=max_colors)
+                img_q.save(output_path, 'PNG', optimize=True, compress_level=9)
+        except Exception:
+            img.save(output_path, 'PNG', optimize=True, compress_level=9)
 
     def _compress_jpeg(self, img: Image.Image, output_path: str, quality: int):
-        """JPEG 压缩 - 使用优化的渐进式 JPEG"""
+        """JPEG 压缩 - 使用 MozJPEG 优化"""
+        # 先用 Pillow 保存
+        buffer = io.BytesIO()
         img.save(
-            output_path,
+            buffer,
             'JPEG',
             quality=quality,
             optimize=True,
-            progressive=True,  # 渐进式 JPEG
-            subsampling='4:2:0'  # 色度子采样
+            progressive=True,
+            subsampling='4:2:0'
         )
+
+        jpeg_bytes = buffer.getvalue()
+
+        # 使用 MozJPEG 进一步优化
+        if HAS_MOZJPEG:
+            try:
+                jpeg_bytes = mozjpeg_lossless_optimization.optimize(jpeg_bytes)
+                print(f"[JPEG压缩] MozJPEG 优化完成")
+            except Exception as e:
+                print(f"[JPEG压缩] MozJPEG 优化失败: {e}")
+
+        # 写入文件
+        with open(output_path, 'wb') as f:
+            f.write(jpeg_bytes)
 
     def _compress_webp(self, img: Image.Image, output_path: str, quality: int):
         """WebP 压缩 - 使用 Google WebP 编码器"""
@@ -286,7 +282,7 @@ class AdvancedCompressor:
             if target_format == 'PNG':
                 self._compress_png_memory(img, output_buffer, quality)
             elif target_format == 'JPEG':
-                img.save(output_buffer, 'JPEG', quality=quality, optimize=True, progressive=True)
+                self._compress_jpeg_memory(img, output_buffer, quality)
             elif target_format == 'WEBP':
                 img.save(output_buffer, 'WEBP', quality=quality, method=6)
             else:
@@ -298,11 +294,29 @@ class AdvancedCompressor:
         return compressed_size, ratio
 
     def _compress_png_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
-        """PNG 内存压缩"""
-        max_colors = 256
-        has_alpha = img.mode in ('RGBA', 'LA')
+        """PNG 内存压缩 - 使用 imagequant"""
+        max_colors = 256 if quality >= 75 else 128
 
+        if HAS_IMAGEQUANT:
+            try:
+                if img.mode not in ('RGBA', 'RGB'):
+                    img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
+
+                result = imagequant.quantize_pil_image(
+                    img,
+                    dithering_level=1.0,
+                    max_colors=max_colors,
+                    min_quality=0,
+                    max_quality=100
+                )
+                result.save(output_buffer, 'PNG', optimize=True, compress_level=9)
+                return
+            except Exception:
+                pass
+
+        # Pillow 备用
         try:
+            has_alpha = img.mode in ('RGBA', 'LA')
             if has_alpha:
                 if img.mode != 'RGBA':
                     img = img.convert('RGBA')
@@ -315,6 +329,21 @@ class AdvancedCompressor:
                 img_q.save(output_buffer, 'PNG', optimize=True, compress_level=9)
         except:
             img.save(output_buffer, 'PNG', optimize=True, compress_level=9)
+
+    def _compress_jpeg_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
+        """JPEG 内存压缩 - 使用 MozJPEG 优化"""
+        temp_buffer = io.BytesIO()
+        img.save(temp_buffer, 'JPEG', quality=quality, optimize=True, progressive=True, subsampling='4:2:0')
+
+        jpeg_bytes = temp_buffer.getvalue()
+
+        if HAS_MOZJPEG:
+            try:
+                jpeg_bytes = mozjpeg_lossless_optimization.optimize(jpeg_bytes)
+            except Exception:
+                pass
+
+        output_buffer.write(jpeg_bytes)
 
     def batch_compress(
         self,
