@@ -61,7 +61,7 @@ img-yasuo/
 
 ```bash
 # 后端
-cd serve && python -m uvicorn app.main:app --reload --port 8001
+cd serve && python main.py
 
 # 前端
 npm run dev

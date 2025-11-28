@@ -1,9 +1,9 @@
-import { Github, Download, CheckCircle, XCircle, Eye, Loader2, Sun, Moon } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
 import JSZip from 'jszip'
-import { UploadZone } from './components/UploadZone'
+import { Download, Eye, Github, Loader2, Moon, Sun, XCircle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { ImageCompare } from './components/ImageCompare'
-import { compressSingleImage, formatSize, type CompressResult } from './lib/api'
+import { UploadZone } from './components/UploadZone'
+import { compressSingleImage, formatSize, type CompressResult, type OutputFormat } from './lib/api'
 
 type FileStatus = 'pending' | 'compressing' | 'done' | 'error'
 
@@ -64,10 +64,18 @@ function ProgressBar({ progress, status }: { progress: number; status: FileStatu
   )
 }
 
+const FORMAT_OPTIONS: { value: OutputFormat; label: string; desc: string }[] = [
+  { value: 'original', label: '保持原格式', desc: '不转换格式' },
+  { value: 'webp', label: 'WebP', desc: '压缩率最高' },
+  { value: 'png', label: 'PNG', desc: '无损透明' },
+  { value: 'jpeg', label: 'JPEG', desc: '照片最佳' },
+]
+
 function App() {
   const { isDark, toggle: toggleTheme } = useTheme()
   const [files, setFiles] = useState<FileItem[]>([])
   const [isCompressing, setIsCompressing] = useState(false)
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('original')
   const [compareData, setCompareData] = useState<{ originalUrl: string; compressedUrl: string; filename: string } | null>(null)
   const progressIntervals = useRef<Map<string, NodeJS.Timeout>>(new Map())
 
@@ -117,7 +125,7 @@ function App() {
       startProgress(currentFile.id)
 
       try {
-        const result = await compressSingleImage(currentFile.file)
+        const result = await compressSingleImage(currentFile.file, outputFormat)
         stopProgress(currentFile.id)
         setFiles(prev => prev.map((f, idx) =>
           idx === i ? { ...f, status: result.success ? 'done' : 'error', progress: 100, result } : f
@@ -139,7 +147,10 @@ function App() {
     if (item.result?.success && item.result.data) {
       const a = document.createElement('a')
       a.href = item.result.data
-      a.download = item.file.name
+      // 使用实际输出格式的扩展名
+      const originalName = item.file.name.replace(/\.[^.]+$/, '')
+      const ext = item.result.format === 'jpeg' ? 'jpg' : item.result.format
+      a.download = `${originalName}.${ext}`
       a.click()
     }
   }
@@ -152,7 +163,9 @@ function App() {
       const zip = new JSZip()
       for (const item of successItems) {
         const base64Data = item.result!.data.split(',')[1]
-        zip.file(item.file.name, base64Data, { base64: true })
+        const originalName = item.file.name.replace(/\.[^.]+$/, '')
+        const ext = item.result!.format === 'jpeg' ? 'jpg' : item.result!.format
+        zip.file(`${originalName}.${ext}`, base64Data, { base64: true })
       }
       const blob = await zip.generateAsync({ type: 'blob' })
       const url = URL.createObjectURL(blob)
@@ -230,6 +243,28 @@ function App() {
 
       {/* Main */}
       <main className="flex-1 max-w-5xl mx-auto px-4 py-6 space-y-6 w-full">
+        {/* Format Selector */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-sm text-muted-foreground">输出格式:</span>
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            {FORMAT_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                onClick={() => setOutputFormat(option.value)}
+                disabled={isCompressing}
+                className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                  outputFormat === option.value
+                    ? 'bg-background text-foreground shadow-sm font-medium'
+                    : 'text-muted-foreground hover:text-foreground'
+                } ${isCompressing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={option.desc}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <UploadZone onFilesSelected={handleFilesSelected} disabled={isCompressing} />
 
         {files.length > 0 && (
@@ -323,6 +358,7 @@ function App() {
                             <span className="text-muted-foreground">→</span>
                             <span className="text-success">{formatSize(item.result.compressed_size)}</span>
                             <span className="text-success font-medium">-{item.result.compression_ratio.toFixed(0)}%</span>
+                            <span className="px-1.5 py-0.5 text-xs bg-muted rounded uppercase">{item.result.format}</span>
                           </div>
                         )}
 

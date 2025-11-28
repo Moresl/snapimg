@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 interface ImageCompareProps {
   originalUrl: string

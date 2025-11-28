@@ -15,7 +15,9 @@
       "Bash(npm run dev)",
       "Bash(del:*)",
       "WebFetch(domain:github.com)",
-      "WebSearch"
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
