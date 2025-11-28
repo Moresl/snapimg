@@ -12,7 +12,8 @@
       "Bash(npm install)",
       "Bash(npm install -D unocss @unocss/preset-uno @unocss/preset-icons @unocss/reset @iconify-json/lucide)",
       "Bash(npm install class-variance-authority clsx tailwind-merge lucide-react react-dropzone)",
-      "Bash(npm run dev)"
+      "Bash(npm run dev)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []
