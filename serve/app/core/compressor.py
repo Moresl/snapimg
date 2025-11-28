@@ -99,39 +99,35 @@ class AdvancedCompressor:
         return original_size, compressed_size, compression_ratio
 
     def _compress_png(self, img: Image.Image, output_path: str, quality: int, use_pngquant: bool):
-        """PNG 压缩 - 使用 imagequant (libimagequant) 实现高质量压缩"""
+        """PNG 压缩 - 使用 imagequant 有损压缩"""
 
         if not use_pngquant:
-            # 无损压缩
             img.save(output_path, 'PNG', optimize=True, compress_level=9)
             return
 
-        # 根据质量参数决定颜色数量
-        max_colors = 256 if quality >= 75 else 128
+        max_colors = 256
 
         if HAS_IMAGEQUANT:
             try:
-                # 使用 imagequant (libimagequant) - pngquant/TinyPNG 同款算法
                 if img.mode not in ('RGBA', 'RGB'):
                     img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
-                # imagequant 量化
+                # 使用 imagequant 压缩，min_quality=50 允许更多压缩
                 result = imagequant.quantize_pil_image(
                     img,
-                    dithering_level=1.0,  # Floyd-Steinberg 抖动
+                    dithering_level=1.0,
                     max_colors=max_colors,
-                    min_quality=0,
-                    max_quality=100
+                    min_quality=50,
+                    max_quality=90
                 )
 
-                # 保存
                 result.save(output_path, 'PNG', optimize=True, compress_level=9)
-                print(f"[PNG压缩] imagequant 量化为 {max_colors} 色")
+                print(f"[PNG压缩] imagequant 压缩完成")
                 return
             except Exception as e:
-                print(f"[PNG压缩] imagequant 失败: {e}，使用 Pillow 备用")
+                print(f"[PNG压缩] imagequant 失败: {e}")
 
-        # Pillow 备用方案
+        # Pillow 备用
         self._compress_png_pillow(img, output_path, max_colors)
 
     def _compress_png_pillow(self, img: Image.Image, output_path: str, max_colors: int):
@@ -295,7 +291,7 @@ class AdvancedCompressor:
 
     def _compress_png_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
         """PNG 内存压缩 - 使用 imagequant"""
-        max_colors = 256 if quality >= 75 else 128
+        max_colors = 256
 
         if HAS_IMAGEQUANT:
             try:
@@ -306,8 +302,8 @@ class AdvancedCompressor:
                     img,
                     dithering_level=1.0,
                     max_colors=max_colors,
-                    min_quality=0,
-                    max_quality=100
+                    min_quality=50,
+                    max_quality=90
                 )
                 result.save(output_buffer, 'PNG', optimize=True, compress_level=9)
                 return
@@ -315,6 +311,10 @@ class AdvancedCompressor:
                 pass
 
         # Pillow 备用
+        self._compress_png_pillow_memory(img, output_buffer, max_colors)
+
+    def _compress_png_pillow_memory(self, img: Image.Image, output_buffer: io.BytesIO, max_colors: int):
+        """Pillow PNG 内存压缩备用"""
         try:
             has_alpha = img.mode in ('RGBA', 'LA')
             if has_alpha:
