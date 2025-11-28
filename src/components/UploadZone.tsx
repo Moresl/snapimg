@@ -1,6 +1,8 @@
 import { Upload } from 'lucide-react'
 import { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
+import { Button } from './ui/button'
+import { cn } from '@/lib/utils'
 
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void
@@ -33,24 +35,22 @@ export function UploadZone({ onFilesSelected, disabled }: UploadZoneProps) {
   return (
     <div
       {...getRootProps()}
-      className={`
-        border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-        transition-all duration-200
-        ${isDragActive
-          ? 'border-primary bg-primary/5'
-          : 'border-border hover:border-primary/50 hover:bg-muted/30'
-        }
-        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-      `}
+      className={cn(
+        "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
+        isDragActive
+          ? "border-primary bg-primary/5"
+          : "border-border hover:border-primary/50 hover:bg-muted/30",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
     >
       <input {...getInputProps()} />
 
       <div className="flex items-center justify-center gap-4">
-        <div className={`
-          w-12 h-12 rounded-full flex items-center justify-center shrink-0
-          ${isDragActive ? 'bg-primary/20' : 'bg-muted'}
-        `}>
-          <Upload className={`w-6 h-6 ${isDragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+        <div className={cn(
+          "w-12 h-12 rounded-full flex items-center justify-center shrink-0",
+          isDragActive ? "bg-primary/20" : "bg-muted"
+        )}>
+          <Upload className={cn("w-6 h-6", isDragActive ? "text-primary" : "text-muted-foreground")} />
         </div>
 
         <div className="text-left">
@@ -62,13 +62,9 @@ export function UploadZone({ onFilesSelected, disabled }: UploadZoneProps) {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn-primary ml-auto"
-          disabled={disabled}
-        >
+        <Button className="ml-auto" disabled={disabled}>
           选择文件
-        </button>
+        </Button>
       </div>
     </div>
   )

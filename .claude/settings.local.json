@@ -17,7 +17,10 @@
       "WebFetch(domain:github.com)",
       "WebSearch",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

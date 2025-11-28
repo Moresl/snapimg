@@ -3,7 +3,12 @@ import { Download, Eye, Github, Loader2, Moon, Sun, XCircle } from 'lucide-react
 import { useEffect, useRef, useState } from 'react'
 import { ImageCompare } from './components/ImageCompare'
 import { UploadZone } from './components/UploadZone'
+import { Button } from './components/ui/button'
+import { Card, CardContent } from './components/ui/card'
+import { Progress } from './components/ui/progress'
+import { ToggleGroup, ToggleGroupItem } from './components/ui/toggle-group'
 import { compressSingleImage, formatSize, type CompressResult, type OutputFormat } from './lib/api'
+import { cn } from './lib/utils'
 
 type FileStatus = 'pending' | 'compressing' | 'done' | 'error'
 
@@ -39,36 +44,11 @@ function useTheme() {
   return { isDark, toggle: () => setIsDark(!isDark) }
 }
 
-// 进度条组件
-function ProgressBar({ progress, status }: { progress: number; status: FileStatus }) {
-  return (
-    <div className="mt-2 flex items-center gap-3">
-      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all duration-300 ${
-            status === 'error' ? 'bg-destructive' :
-            status === 'done' ? 'bg-success' :
-            'bg-gradient-to-r from-primary to-primary/60'
-          }`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <span className={`text-xs font-bold w-12 text-right ${
-        status === 'error' ? 'text-destructive' :
-        status === 'done' ? 'text-success' :
-        'text-primary'
-      }`}>
-        {Math.round(progress)}%
-      </span>
-    </div>
-  )
-}
-
-const FORMAT_OPTIONS: { value: OutputFormat; label: string; desc: string }[] = [
-  { value: 'original', label: '保持原格式', desc: '不转换格式' },
-  { value: 'webp', label: 'WebP', desc: '压缩率最高' },
-  { value: 'png', label: 'PNG', desc: '无损透明' },
-  { value: 'jpeg', label: 'JPEG', desc: '照片最佳' },
+const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
+  { value: 'original', label: '原格式' },
+  { value: 'webp', label: 'WebP' },
+  { value: 'png', label: 'PNG' },
+  { value: 'jpeg', label: 'JPEG' },
 ]
 
 function App() {
@@ -147,7 +127,6 @@ function App() {
     if (item.result?.success && item.result.data) {
       const a = document.createElement('a')
       a.href = item.result.data
-      // 使用实际输出格式的扩展名
       const originalName = item.file.name.replace(/\.[^.]+$/, '')
       const ext = item.result.format === 'jpeg' ? 'jpg' : item.result.format
       a.download = `${originalName}.${ext}`
@@ -171,7 +150,7 @@ function App() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `compressed_images_${Date.now()}.zip`
+      a.download = `imglite_${Date.now()}.zip`
       a.click()
       URL.revokeObjectURL(url)
     }
@@ -200,29 +179,30 @@ function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-lg">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="32" height="32" rx="8" className="fill-primary"/>
-              <rect x="6" y="8" width="14" height="12" rx="2" fill="white" opacity="0.9"/>
-              <circle cx="10" cy="12" r="1.5" className="fill-primary"/>
-              <path d="M6 17 L11 14 L14 16 L20 11" className="stroke-primary" strokeWidth="1.5" fill="none"/>
-              <path d="M22 16 L26 20 M26 16 L22 20" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M19 22 L26 22 L26 25 L19 25 Z" fill="white" opacity="0.7"/>
-            </svg>
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
             <div>
-              <h1 className="text-xl font-bold">图片压缩</h1>
+              <h1 className="text-xl font-bold">ImgLite</h1>
               <p className="text-xs text-muted-foreground">高效压缩 · 保持质量</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={toggleTheme} className="btn-ghost btn-icon" title={isDark ? '切换浅色' : '切换深色'}>
-              {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <a href="https://github.com/Moresl/ImageMinify" target="_blank" rel="noopener noreferrer" className="btn-ghost btn-icon">
-              <Github className="w-5 h-5" />
-            </a>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title={isDark ? '切换浅色' : '切换深色'}>
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                <Github className="h-5 w-5" />
+              </a>
+            </Button>
           </div>
         </div>
       </header>
@@ -244,25 +224,25 @@ function App() {
       {/* Main */}
       <main className="flex-1 max-w-5xl mx-auto px-4 py-6 space-y-6 w-full">
         {/* Format Selector */}
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           <span className="text-sm text-muted-foreground">输出格式:</span>
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          <ToggleGroup
+            type="single"
+            value={outputFormat}
+            onValueChange={(value) => value && setOutputFormat(value as OutputFormat)}
+            disabled={isCompressing}
+            className="bg-muted p-1 rounded-lg"
+          >
             {FORMAT_OPTIONS.map(option => (
-              <button
+              <ToggleGroupItem
                 key={option.value}
-                onClick={() => setOutputFormat(option.value)}
-                disabled={isCompressing}
-                className={`px-3 py-1.5 text-sm rounded-md transition-all ${
-                  outputFormat === option.value
-                    ? 'bg-background text-foreground shadow-sm font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                } ${isCompressing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title={option.desc}
+                value={option.value}
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-sm"
               >
                 {option.label}
-              </button>
+              </ToggleGroupItem>
             ))}
-          </div>
+          </ToggleGroup>
         </div>
 
         <UploadZone onFilesSelected={handleFilesSelected} disabled={isCompressing} />
@@ -270,8 +250,8 @@ function App() {
         {files.length > 0 && (
           <div className="space-y-4">
             {/* Summary Card */}
-            <div className="card overflow-hidden">
-              <div className="card-content p-6">
+            <Card>
+              <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
                     <div>
@@ -286,12 +266,12 @@ function App() {
                       <>
                         <div>
                           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">压缩后</p>
-                          <p className="text-2xl font-bold text-success">{formatSize(totalCompressed)}</p>
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatSize(totalCompressed)}</p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">节省空间</p>
                           <div className="flex items-baseline gap-2">
-                            <p className="text-2xl font-bold text-success">{totalRatio.toFixed(0)}%</p>
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalRatio.toFixed(0)}%</p>
                             <span className="text-sm text-muted-foreground">({formatSize(savedSize)})</span>
                           </div>
                         </div>
@@ -301,27 +281,24 @@ function App() {
 
                   <div className="flex gap-2">
                     {doneFiles > 0 && (
-                      <button className="btn-primary btn-lg gap-2" onClick={handleDownloadAll} disabled={isCompressing}>
-                        <Download className="w-4 h-4" />
+                      <Button onClick={handleDownloadAll} disabled={isCompressing}>
+                        <Download className="mr-2 h-4 w-4" />
                         {doneFiles > 1 ? '下载全部' : '下载'}
-                      </button>
+                      </Button>
                     )}
-                    <button className="btn-outline btn-lg" onClick={handleClear} disabled={isCompressing}>
+                    <Button variant="outline" onClick={handleClear} disabled={isCompressing}>
                       清除
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Files Grid */}
             <div className="grid gap-2">
               {files.map((item) => (
-                <div
-                  key={item.id}
-                  className={`card ${item.status === 'error' ? 'border-destructive/50' : ''}`}
-                >
-                  <div className="card-content p-3">
+                <Card key={item.id} className={cn(item.status === 'error' && 'border-destructive/50')}>
+                  <CardContent className="p-3">
                     <div className="flex items-center gap-3">
                       {/* Thumbnail */}
                       <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-muted relative">
@@ -349,15 +326,27 @@ function App() {
                         </div>
 
                         {(item.status === 'pending' || item.status === 'compressing') && (
-                          <ProgressBar progress={item.progress} status={item.status} />
+                          <div className="mt-2 flex items-center gap-3">
+                            <Progress
+                              value={item.progress}
+                              className="flex-1"
+                              indicatorClassName={cn(
+                                item.status === 'error' && 'bg-destructive',
+                                item.status === 'done' && 'bg-green-500'
+                              )}
+                            />
+                            <span className="text-xs font-medium text-primary w-10 text-right">
+                              {Math.round(item.progress)}%
+                            </span>
+                          </div>
                         )}
 
                         {item.status === 'done' && item.result && (
                           <div className="mt-1 flex items-center gap-3 text-sm">
                             <span className="text-muted-foreground">{formatSize(item.result.original_size)}</span>
                             <span className="text-muted-foreground">→</span>
-                            <span className="text-success">{formatSize(item.result.compressed_size)}</span>
-                            <span className="text-success font-medium">-{item.result.compression_ratio.toFixed(0)}%</span>
+                            <span className="text-green-600 dark:text-green-400">{formatSize(item.result.compressed_size)}</span>
+                            <span className="text-green-600 dark:text-green-400 font-medium">-{item.result.compression_ratio.toFixed(0)}%</span>
                             <span className="px-1.5 py-0.5 text-xs bg-muted rounded uppercase">{item.result.format}</span>
                           </div>
                         )}
@@ -369,17 +358,17 @@ function App() {
 
                       {item.status === 'done' && item.result?.success && (
                         <div className="flex gap-1">
-                          <button className="btn-ghost btn-icon" onClick={() => handleCompare(item)} title="对比效果">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="btn-ghost btn-icon" onClick={() => handleDownload(item)} title="下载">
-                            <Download className="w-4 h-4" />
-                          </button>
+                          <Button variant="ghost" size="icon" onClick={() => handleCompare(item)} title="对比效果">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDownload(item)} title="下载">
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -390,10 +379,7 @@ function App() {
       <footer className="border-t py-4">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            图片压缩工具 ·{' '}
-            <a href="https://github.com/Moresl/ImageMinify" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              GitHub
-            </a>
+            ImgLite - 高效图片压缩工具
           </p>
         </div>
       </footer>
