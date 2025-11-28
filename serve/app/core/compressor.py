@@ -116,7 +116,7 @@ class AdvancedCompressor:
                 if img.mode not in ('RGBA', 'RGB'):
                     img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
-                # 不设置 min_quality/max_quality，最大压缩
+                # imagequant 量化 - 无质量限制
                 result = imagequant.quantize_pil_image(
                     img,
                     dithering_level=1.0,
@@ -304,26 +304,22 @@ class AdvancedCompressor:
         return compressed_size, ratio
 
     def _compress_png_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
-        """PNG 内存压缩 - imagequant (无质量限制，最大压缩)"""
+        """PNG 内存压缩 - imagequant"""
         max_colors = 256
-        temp_buffer = io.BytesIO()
 
         if HAS_IMAGEQUANT:
             try:
                 if img.mode not in ('RGBA', 'RGB'):
                     img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
-                # 不设置 min_quality/max_quality，让 imagequant 自由压缩
-                # 这与 wasm-image-compressor 的行为一致
+                # imagequant 量化 - 无质量限制
                 result = imagequant.quantize_pil_image(
                     img,
                     dithering_level=1.0,
                     max_colors=max_colors
                 )
-                result.save(temp_buffer, 'PNG', optimize=True, compress_level=9)
 
-                optimized = self._oxipng_optimize_bytes(temp_buffer.getvalue())
-                output_buffer.write(optimized)
+                result.save(output_buffer, 'PNG', optimize=True, compress_level=9)
                 return
             except Exception:
                 pass
