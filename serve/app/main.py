@@ -25,6 +25,15 @@ app.add_middleware(
 app.include_router(compress.router, prefix="/api", tags=["压缩"])
 
 
+@app.get("/")
+async def root():
+    return {
+        "name": "图片压缩服务",
+        "version": "1.0.0",
+        "docs": "/api/docs",
+        "health": "/api/health"
+    }
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}

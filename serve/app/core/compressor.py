@@ -28,6 +28,9 @@ except ImportError:
     HAS_MOZJPEG = False
     print("[警告] mozjpeg-lossless-optimization 未安装，JPEG 将使用 Pillow 默认压缩")
 
+# oxipng 需要 Rust 编译环境，暂时禁用
+HAS_OXIPNG = False
+
 # 允许加载截断的图片
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -99,10 +102,11 @@ class AdvancedCompressor:
         return original_size, compressed_size, compression_ratio
 
     def _compress_png(self, img: Image.Image, output_path: str, quality: int, use_pngquant: bool):
-        """PNG 压缩 - 使用 imagequant 有损压缩"""
+        """PNG 压缩 - imagequant 量化 + oxipng 无损优化"""
 
         if not use_pngquant:
             img.save(output_path, 'PNG', optimize=True, compress_level=9)
+            self._oxipng_optimize_file(output_path)
             return
 
         max_colors = 256
@@ -112,16 +116,15 @@ class AdvancedCompressor:
                 if img.mode not in ('RGBA', 'RGB'):
                     img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
-                # 使用 imagequant 压缩，min_quality=50 允许更多压缩
+                # 不设置 min_quality/max_quality，最大压缩
                 result = imagequant.quantize_pil_image(
                     img,
                     dithering_level=1.0,
-                    max_colors=max_colors,
-                    min_quality=50,
-                    max_quality=90
+                    max_colors=max_colors
                 )
 
                 result.save(output_path, 'PNG', optimize=True, compress_level=9)
+                self._oxipng_optimize_file(output_path)
                 print(f"[PNG压缩] imagequant 压缩完成")
                 return
             except Exception as e:
@@ -129,6 +132,17 @@ class AdvancedCompressor:
 
         # Pillow 备用
         self._compress_png_pillow(img, output_path, max_colors)
+
+    def _oxipng_optimize_file(self, filepath: str):
+        """使用 oxipng 无损优化 PNG 文件（快速）"""
+        if not HAS_OXIPNG:
+            return
+
+        try:
+            # level 2 是默认值，平衡速度和压缩率
+            oxipng.optimize(filepath, level=2)
+        except Exception as e:
+            print(f"[oxipng] 优化失败: {e}")
 
     def _compress_png_pillow(self, img: Image.Image, output_path: str, max_colors: int):
         """Pillow PNG 压缩备用方案"""
@@ -290,28 +304,43 @@ class AdvancedCompressor:
         return compressed_size, ratio
 
     def _compress_png_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
-        """PNG 内存压缩 - 使用 imagequant"""
+        """PNG 内存压缩 - imagequant (无质量限制，最大压缩)"""
         max_colors = 256
+        temp_buffer = io.BytesIO()
 
         if HAS_IMAGEQUANT:
             try:
                 if img.mode not in ('RGBA', 'RGB'):
                     img = img.convert('RGBA' if 'A' in img.mode or img.mode == 'P' else 'RGB')
 
+                # 不设置 min_quality/max_quality，让 imagequant 自由压缩
+                # 这与 wasm-image-compressor 的行为一致
                 result = imagequant.quantize_pil_image(
                     img,
                     dithering_level=1.0,
-                    max_colors=max_colors,
-                    min_quality=50,
-                    max_quality=90
+                    max_colors=max_colors
                 )
-                result.save(output_buffer, 'PNG', optimize=True, compress_level=9)
+                result.save(temp_buffer, 'PNG', optimize=True, compress_level=9)
+
+                optimized = self._oxipng_optimize_bytes(temp_buffer.getvalue())
+                output_buffer.write(optimized)
                 return
             except Exception:
                 pass
 
         # Pillow 备用
         self._compress_png_pillow_memory(img, output_buffer, max_colors)
+
+    def _oxipng_optimize_bytes(self, data: bytes) -> bytes:
+        """使用 oxipng 无损优化 PNG 字节数据（快速）"""
+        if not HAS_OXIPNG:
+            return data
+
+        try:
+            optimized = oxipng.optimize_from_memory(data, level=2)
+            return optimized if len(optimized) < len(data) else data
+        except Exception:
+            return data
 
     def _compress_png_pillow_memory(self, img: Image.Image, output_buffer: io.BytesIO, max_colors: int):
         """Pillow PNG 内存压缩备用"""

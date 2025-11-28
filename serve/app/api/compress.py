@@ -17,8 +17,11 @@ compressor = AdvancedCompressor()
 
 
 @router.post("/compress", response_model=CompressResult)
-async def compress_single_image(file: UploadFile = File(...)):
-    """压缩单个图片"""
+async def compress_single_image(
+    file: UploadFile = File(...),
+    output_format: str = None  # 可选输出格式: png, webp, jpeg
+):
+    """压缩单个图片，支持格式转换"""
     try:
         file_ext = Path(file.filename).suffix.lower()
         if file_ext not in settings.ALLOWED_EXTENSIONS:
@@ -51,7 +54,8 @@ async def compress_single_image(file: UploadFile = File(...)):
         input_buffer = io.BytesIO(content)
         output_buffer = io.BytesIO()
 
-        target_format = file_ext[1:]
+        # 使用指定格式或保持原格式
+        target_format = output_format if output_format else file_ext[1:]
         compressed_size, ratio = compressor.compress_in_memory(
             input_buffer,
             output_buffer,
