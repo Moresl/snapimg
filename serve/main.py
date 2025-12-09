@@ -39,12 +39,12 @@ def get_local_ips():
 
 def print_startup_info(port: int):
     """打印启动信息"""
-    print("\n  \033[32m图片压缩服务已启动\033[0m\n")
-    print(f"  ➜  Local:   \033[36mhttp://localhost:{port}/\033[0m")
-    print(f"  ➜  API文档: \033[36mhttp://localhost:{port}/api/docs\033[0m")
+    print("\n  [32mImage Compressor Service Started[0m\n")
+    print(f"  ->  Local:   [36mhttp://localhost:{port}/[0m")
+    print(f"  ->  API Doc: [36mhttp://localhost:{port}/api/docs[0m")
 
     for ip in get_local_ips():
-        print(f"  ➜  Network: \033[36mhttp://{ip}:{port}/\033[0m")
+        print(f"  ->  Network: [36mhttp://{ip}:{port}/[0m")
 
     print()
 

@@ -20,7 +20,10 @@
       "Bash(powershell:*)",
       "Bash(npm uninstall:*)",
       "Bash(npx tailwindcss init:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
