@@ -1,7 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 Pillow
 pydantic
 imagequant
 mozjpeg-lossless-optimization
+pillow-avif-plugin
+zopfli
+pypng
+numpy

@@ -46,6 +46,7 @@ function useTheme() {
 
 const FORMAT_OPTIONS: { value: OutputFormat; label: string }[] = [
   { value: 'original', label: '原格式' },
+  { value: 'avif', label: 'AVIF' },
   { value: 'webp', label: 'WebP' },
   { value: 'png', label: 'PNG' },
   { value: 'jpeg', label: 'JPEG' },
@@ -68,13 +69,14 @@ function App() {
   const startProgress = (id: string) => {
     const interval = setInterval(() => {
       setFiles(prev => prev.map(f => {
-        if (f.id === id && f.status === 'compressing' && f.progress < 90) {
-          const increment = Math.max(1, (90 - f.progress) / 10)
-          return { ...f, progress: Math.min(90, f.progress + increment) }
+        if (f.id === id && f.status === 'compressing' && f.progress < 95) {
+          // 更平缓的进度：前50%快，后面慢
+          const increment = f.progress < 50 ? 3 : f.progress < 80 ? 1.5 : 0.5
+          return { ...f, progress: Math.min(95, f.progress + increment) }
         }
         return f
       }))
-    }, 100)
+    }, 200)
     progressIntervals.current.set(id, interval)
   }
 
@@ -150,7 +152,7 @@ function App() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `imglite_${Date.now()}.zip`
+      a.download = `SnapImg_${Date.now()}.zip`
       a.click()
       URL.revokeObjectURL(url)
     }
@@ -190,7 +192,7 @@ function App() {
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-bold">ImgLite</h1>
+              <h1 className="text-xl font-bold">SnapImg</h1>
               <p className="text-xs text-muted-foreground">高效压缩 · 保持质量</p>
             </div>
           </div>
@@ -330,10 +332,6 @@ function App() {
                             <Progress
                               value={item.progress}
                               className="flex-1"
-                              indicatorClassName={cn(
-                                item.status === 'error' && 'bg-destructive',
-                                item.status === 'done' && 'bg-green-500'
-                              )}
                             />
                             <span className="text-xs font-medium text-primary w-10 text-right">
                               {Math.round(item.progress)}%
@@ -379,7 +377,7 @@ function App() {
       <footer className="border-t py-4">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            ImgLite - 高效图片压缩工具
+            SnapImg - 高效图片压缩工具
           </p>
         </div>
       </footer>

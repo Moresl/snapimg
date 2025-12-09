@@ -1,0 +1,9 @@
+services:
+  img-yasuo:
+    build: .
+    container_name: img-yasuo
+    ports:
+      - "9002:80"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai

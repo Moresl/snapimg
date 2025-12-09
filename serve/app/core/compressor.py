@@ -52,10 +52,22 @@ except ImportError:
     HAS_PYPNG = False
     print("[警告] pypng 未安装，将使用 Pillow")
 
-# pngquant CLI 检测
-PNGQUANT_PATH = Path(__file__).parent.parent.parent / "bin" / "pngquant.exe"
+# pngquant CLI 检测 (支持 Windows 本地和 Linux Docker)
+import shutil
+PNGQUANT_PATH = None
 HAS_PNGQUANT = False
-if PNGQUANT_PATH.exists():
+
+# 先检查本地 bin 目录 (Windows)
+local_pngquant = Path(__file__).parent.parent.parent / "bin" / "pngquant.exe"
+if local_pngquant.exists():
+    PNGQUANT_PATH = local_pngquant
+else:
+    # 检查系统 PATH (Linux/Docker)
+    system_pngquant = shutil.which("pngquant")
+    if system_pngquant:
+        PNGQUANT_PATH = Path(system_pngquant)
+
+if PNGQUANT_PATH:
     try:
         result = subprocess.run([str(PNGQUANT_PATH), "--version"], capture_output=True, timeout=5)
         HAS_PNGQUANT = result.returncode == 0
@@ -67,10 +79,19 @@ if PNGQUANT_PATH.exists():
 if not HAS_PNGQUANT:
     print("[警告] pngquant 未找到，PNG 将使用 Pillow 压缩")
 
-# oxipng CLI 检测 (PNG 无损优化，重新压缩 zlib)
-OXIPNG_PATH = Path(__file__).parent.parent.parent / "bin" / "oxipng.exe"
+# oxipng CLI 检测 (支持 Windows 本地和 Linux Docker)
+OXIPNG_PATH = None
 HAS_OXIPNG = False
-if OXIPNG_PATH.exists():
+
+local_oxipng = Path(__file__).parent.parent.parent / "bin" / "oxipng.exe"
+if local_oxipng.exists():
+    OXIPNG_PATH = local_oxipng
+else:
+    system_oxipng = shutil.which("oxipng")
+    if system_oxipng:
+        OXIPNG_PATH = Path(system_oxipng)
+
+if OXIPNG_PATH:
     try:
         result = subprocess.run([str(OXIPNG_PATH), "--version"], capture_output=True, timeout=5)
         HAS_OXIPNG = result.returncode == 0
@@ -168,7 +189,7 @@ class AdvancedCompressor:
             # --strip: 移除元数据
             result = subprocess.run([
                 str(PNGQUANT_PATH),
-                '128',  # 128色 与 wasm-image-compressor 一致
+                '254',  # 254色
                 '--speed=1',  # 最佳压缩
                 '--strip',
                 '--force',
@@ -235,15 +256,15 @@ class AdvancedCompressor:
             rgba_data,
             width,
             height,
-            dithering_level=0.3,  # 低抖动实现高压缩率
+            dithering_level=1.0,  # 高抖动保证颜色准确
             max_colors=max_colors,
-            min_quality=0,
+            min_quality=70,
             max_quality=100
         )
 
         # 快速模式跳过像素优化（影响很小）
         if not fast_mode:
-            indexed_pixels = self._optimize_pixel_repetition(indexed_pixels, palette, width, height, threshold=5)
+            indexed_pixels = self._optimize_pixel_repetition(indexed_pixels, palette, width, height, threshold=10)
 
         # 构建 PNG 文件
         png_data = self._build_png(width, height, palette, indexed_pixels, fast_mode=fast_mode)
@@ -575,7 +596,7 @@ class AdvancedCompressor:
         if HAS_IMAGEQUANT:
             try:
                 with Image.open(io.BytesIO(png_bytes)) as img:
-                    self._compress_png_imagequant(img, output_buffer, max_colors=256)
+                    self._compress_png_imagequant(img, output_buffer, max_colors=254, fast_mode=False)
                     compressor_name = "zopfli" if HAS_ZOPFLI else "zlib"
                     print(f"[PNG压缩] imagequant + {compressor_name} 完成")
                     return True
@@ -593,8 +614,8 @@ class AdvancedCompressor:
             try:
                 result = subprocess.run([
                     str(PNGQUANT_PATH),
-                    '128',
-                    '--speed=1',
+                    '254',
+                    '--speed=3',
                     '--strip',
                     '--force',
                     '--output', tmp_out_path,
@@ -623,7 +644,7 @@ class AdvancedCompressor:
         # 优先使用 imagequant (与 wasm-image-compressor 相同算法)
         if HAS_IMAGEQUANT:
             try:
-                self._compress_png_imagequant(img, output_buffer, max_colors=256)
+                self._compress_png_imagequant(img, output_buffer, max_colors=254, fast_mode=False)
                 print(f"[PNG压缩] imagequant 完成")
                 return
             except Exception as e:
@@ -640,8 +661,8 @@ class AdvancedCompressor:
             try:
                 result = subprocess.run([
                     str(PNGQUANT_PATH),
-                    '128',
-                    '--speed=1',
+                    '254',
+                    '--speed=3',
                     '--strip',
                     '--force',
                     '--output', tmp_out_path,
@@ -662,7 +683,7 @@ class AdvancedCompressor:
                         pass
 
         # 最后回退到 Pillow
-        self._compress_png_pillow_memory(img, output_buffer, 128)
+        self._compress_png_pillow_memory(img, output_buffer, 254)
 
     def _compress_png_pillow_memory(self, img: Image.Image, output_buffer: io.BytesIO, max_colors: int):
         """Pillow PNG 内存压缩备用"""

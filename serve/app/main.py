@@ -1,8 +1,12 @@
 """
 图片压缩服务 - FastAPI
 """
-from fastapi import FastAPI
+import os
+from pathlib import Path
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 
 from app.core.config import settings
 from app.api import compress
@@ -22,18 +26,61 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# API 路由
 app.include_router(compress.router, prefix="/api", tags=["压缩"])
-
-
-@app.get("/")
-async def root():
-    return {
-        "name": "图片压缩服务",
-        "version": "1.0.0",
-        "docs": "/api/docs",
-        "health": "/api/health"
-    }
 
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+# 静态文件服务 (Docker 部署时使用)
+STATIC_DIR = None
+possible_paths = [
+    Path(__file__).parent.parent / "static",
+    Path("/app/static"),
+]
+
+for p in possible_paths:
+    if p.exists() and (p / "index.html").exists():
+        STATIC_DIR = p
+        print(f"[静态文件] 找到目录: {STATIC_DIR}")
+        break
+
+if STATIC_DIR:
+    # 挂载整个静态目录
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    # 其他静态文件 (favicon, etc)
+    @app.get("/favicon.ico")
+    async def favicon():
+        favicon_path = STATIC_DIR / "favicon.ico"
+        if favicon_path.exists():
+            return FileResponse(favicon_path)
+        return HTMLResponse(status_code=404)
+
+    @app.get("/vite.svg")
+    async def vite_svg():
+        svg_path = STATIC_DIR / "vite.svg"
+        if svg_path.exists():
+            return FileResponse(svg_path)
+        return HTMLResponse(status_code=404)
+
+    # 所有其他路径返回 index.html (SPA)
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        # API 请求不处理
+        if full_path.startswith("api"):
+            return HTMLResponse(content='{"error": "not found"}', status_code=404)
+        return FileResponse(STATIC_DIR / "index.html")
+
+else:
+    print("[静态文件] 未找到静态目录，仅提供 API")
+
+    @app.get("/")
+    async def root():
+        return {
+            "name": "图片压缩服务",
+            "version": "1.0.0",
+            "docs": "/api/docs",
+            "health": "/api/health"
+        }
