@@ -36,10 +36,10 @@ export function UploadZone({ onFilesSelected, disabled }: UploadZoneProps) {
     <div
       {...getRootProps()}
       className={cn(
-        "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200",
+        "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 bg-card",
         isDragActive
-          ? "border-primary bg-primary/5"
-          : "border-border hover:border-primary/50 hover:bg-muted/30",
+          ? "border-primary bg-primary/10"
+          : "border-primary/50 hover:border-primary hover:bg-primary/5",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
@@ -54,7 +54,7 @@ export function UploadZone({ onFilesSelected, disabled }: UploadZoneProps) {
         </div>
 
         <div className="text-left">
-          <p className="font-medium">
+          <p className="font-medium text-foreground">
             {isDragActive ? '释放以上传' : '拖拽或点击上传图片'}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">

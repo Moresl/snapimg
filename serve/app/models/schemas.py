@@ -11,7 +11,7 @@ class CompressResult(BaseModel):
     original_size: int
     compressed_size: int
     compression_ratio: float
-    data: str  # base64 data URL
+    data: str 
     success: bool
     error: Optional[str] = None
     format: str

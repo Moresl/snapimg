@@ -21,7 +21,6 @@ interface FileItem {
   originalUrl: string
 }
 
-// 主题切换 Hook
 function useTheme() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -70,7 +69,6 @@ function App() {
     const interval = setInterval(() => {
       setFiles(prev => prev.map(f => {
         if (f.id === id && f.status === 'compressing' && f.progress < 95) {
-          // 更平缓的进度：前50%快，后面慢
           const increment = f.progress < 50 ? 3 : f.progress < 80 ? 1.5 : 0.5
           return { ...f, progress: Math.min(95, f.progress + increment) }
         }
@@ -180,8 +178,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-lg">
+    
+      <header className="sticky top-0 z-40 border-b bg-card">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
@@ -209,23 +207,21 @@ function App() {
         </div>
       </header>
 
-      {/* Hero Section */}
       {files.length === 0 && (
         <section className="py-12 px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               让图片更轻，质量不变
             </h2>
-            <p className="text-muted-foreground mb-6">
-              支持 PNG、JPEG、WebP 格式，单次最多处理 20 张图片
+            <p className="text-muted-foreground">
+              支持 PNG、JPEG、WebP、AVIF 格式，单次最多处理 20 张图片
             </p>
           </div>
         </section>
       )}
 
-      {/* Main */}
       <main className="flex-1 max-w-5xl mx-auto px-4 py-6 space-y-6 w-full">
-        {/* Format Selector */}
+    
         <div className="flex items-center justify-center gap-3">
           <span className="text-sm text-muted-foreground">输出格式:</span>
           <ToggleGroup
@@ -233,13 +229,13 @@ function App() {
             value={outputFormat}
             onValueChange={(value) => value && setOutputFormat(value as OutputFormat)}
             disabled={isCompressing}
-            className="bg-muted p-1 rounded-lg"
+            className="bg-card border p-1 rounded-lg"
           >
             {FORMAT_OPTIONS.map(option => (
               <ToggleGroupItem
                 key={option.value}
                 value={option.value}
-                className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3 py-1.5 text-sm"
+                className="px-3 py-1.5 text-sm"
               >
                 {option.label}
               </ToggleGroupItem>
@@ -251,7 +247,7 @@ function App() {
 
         {files.length > 0 && (
           <div className="space-y-4">
-            {/* Summary Card */}
+   
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -296,13 +292,12 @@ function App() {
               </CardContent>
             </Card>
 
-            {/* Files Grid */}
             <div className="grid gap-2">
               {files.map((item) => (
                 <Card key={item.id} className={cn(item.status === 'error' && 'border-destructive/50')}>
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
-                      {/* Thumbnail */}
+            
                       <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-muted relative">
                         <img
                           src={item.originalUrl}
@@ -373,8 +368,7 @@ function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t py-4">
+      <footer className="border-t py-4 bg-card">
         <div className="max-w-5xl mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
             SnapImg - 高效图片压缩工具

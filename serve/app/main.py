@@ -47,10 +47,9 @@ for p in possible_paths:
         break
 
 if STATIC_DIR:
-    # 挂载整个静态目录
+    
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
 
-    # 其他静态文件 (favicon, etc)
     @app.get("/favicon.ico")
     async def favicon():
         favicon_path = STATIC_DIR / "favicon.ico"
@@ -65,10 +64,9 @@ if STATIC_DIR:
             return FileResponse(svg_path)
         return HTMLResponse(status_code=404)
 
-    # 所有其他路径返回 index.html (SPA)
     @app.get("/{full_path:path}")
     async def serve_spa(request: Request, full_path: str):
-        # API 请求不处理
+    
         if full_path.startswith("api"):
             return HTMLResponse(content='{"error": "not found"}', status_code=404)
         return FileResponse(STATIC_DIR / "index.html")

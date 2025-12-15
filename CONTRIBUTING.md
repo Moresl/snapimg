@@ -1,64 +1,206 @@
-# 贡献指南
+# 贡献指南 | Contributing Guide
 
-感谢您考虑为图片压缩工具做出贡献！这个文档提供了贡献代码的指南和流程。
+[English](#english) | [中文](#中文)
 
-## 行为准则
+---
 
-请阅读并遵守我们的[行为准则](CODE_OF_CONDUCT.md)。
+## 中文
 
-## 如何贡献
+感谢你对 SnapImg 的关注！我们欢迎任何形式的贡献。
 
-### 报告Bug
+### 如何贡献
 
-如果您发现了bug，请通过GitHub Issues报告，并包含以下信息：
+#### 报告 Bug
 
-1. 问题的简要描述
-2. 重现步骤
-3. 预期行为
-4. 实际行为
-5. 截图（如果适用）
-6. 您的操作系统和Python版本
-7. 其他可能有帮助的信息
+如果你发现了 bug，请创建一个 Issue，包含以下信息：
 
-### 提出新功能
+- 问题的简要描述
+- 复现步骤
+- 期望的行为
+- 实际的行为
+- 截图（如果适用）
+- 环境信息（浏览器、操作系统等）
 
-如果您有新功能的想法，请先通过GitHub Issues讨论。这样可以确保您的工作不会与其他人的工作重复，并且符合项目的目标和方向。
+#### 提出新功能
 
-### 提交Pull Request
+如果你有新功能的想法，请先创建一个 Issue 讨论：
 
-1. Fork仓库
-2. 创建您的特性分支 (`git checkout -b feature/amazing-feature`)
-3. 提交您的更改 (`git commit -m 'Add some amazing feature'`)
+- 描述你想要的功能
+- 解释为什么这个功能有用
+- 如果可能，提供实现思路
+
+#### 提交代码
+
+1. Fork 这个仓库
+2. 创建你的功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交你的更改 (`git commit -m 'Add some amazing feature'`)
 4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 打开Pull Request
+5. 创建一个 Pull Request
 
-### 开发流程
+### 开发环境设置
 
-1. 确保您的代码遵循项目的代码风格
-2. 更新文档以反映任何更改
-3. 确保您的代码通过所有测试
-4. 如果添加新功能，请添加相应的测试
-5. 确保您的代码不会引入新的警告或错误
-
-## 代码风格
-
-- 遵循[PEP 8](https://www.python.org/dev/peps/pep-0008/)风格指南
-- 使用有意义的变量名和函数名
-- 添加适当的注释和文档字符串
-- 保持代码简洁明了
-
-## 测试
-
-在提交代码之前，请确保运行测试并确保它们通过：
+#### 前端
 
 ```bash
-python -m unittest discover tests
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建
+npm run build
+
+# 代码检查
+npm run lint
 ```
 
-## 文档
+#### 后端
 
-如果您的更改影响了用户体验或添加了新功能，请更新相应的文档。
+```bash
+cd serve
 
-## 许可证
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-通过贡献您的代码，您同意您的贡献将根据项目的[MIT许可证](LICENSE)进行许可。
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动服务
+python main.py
+```
+
+### 代码规范
+
+#### 前端
+
+- 使用 TypeScript
+- 遵循 ESLint 配置
+- 组件使用函数式组件 + Hooks
+- 使用 Tailwind CSS 进行样式设计
+
+#### 后端
+
+- 遵循 PEP 8 规范
+- 使用类型注解
+- 函数和类需要有文档字符串
+
+### 提交信息规范
+
+提交信息请遵循以下格式：
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+类型（type）：
+- `feat`: 新功能
+- `fix`: 修复 bug
+- `docs`: 文档更新
+- `style`: 代码格式调整
+- `refactor`: 代码重构
+- `test`: 测试相关
+- `chore`: 构建/工具相关
+
+示例：
+```
+feat: 添加 AVIF 格式支持
+fix: 修复深色模式下文字颜色问题
+docs: 更新 README 安装说明
+```
+
+---
+
+## English
+
+Thank you for your interest in SnapImg! We welcome all forms of contributions.
+
+### How to Contribute
+
+#### Reporting Bugs
+
+If you find a bug, please create an Issue with the following information:
+
+- Brief description of the issue
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- Screenshots (if applicable)
+- Environment info (browser, OS, etc.)
+
+#### Suggesting Features
+
+If you have an idea for a new feature, please create an Issue first:
+
+- Describe the feature you want
+- Explain why it would be useful
+- Provide implementation ideas if possible
+
+#### Submitting Code
+
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
+
+### Development Setup
+
+#### Frontend
+
+```bash
+npm install
+npm run dev
+```
+
+#### Backend
+
+```bash
+cd serve
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+### Code Style
+
+#### Frontend
+
+- Use TypeScript
+- Follow ESLint configuration
+- Use functional components with Hooks
+- Use Tailwind CSS for styling
+
+#### Backend
+
+- Follow PEP 8
+- Use type annotations
+- Add docstrings to functions and classes
+
+### Commit Message Format
+
+```
+<type>: <description>
+
+[optional body]
+```
+
+Types:
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation
+- `style`: Code formatting
+- `refactor`: Code refactoring
+- `test`: Testing
+- `chore`: Build/tooling
+
+Examples:
+```
+feat: add AVIF format support
+fix: fix text color in dark mode
+docs: update README installation guide
+```

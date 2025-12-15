@@ -203,3 +203,13 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Claude Code internal docs
+CLAUDE.md
+claude.md
+.claude/
+
+# Docker
+*.tar
+img-yasuo.tar
+snapimg.tar
