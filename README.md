@@ -7,6 +7,12 @@
 
 [English](README_EN.md) | 中文
 
+<p align="center">
+  <a href="https://img.biekanle.com/" target="_blank">
+    <img src="https://img.shields.io/badge/🚀 在线体验-img.biekanle.com-blue?style=for-the-badge" alt="在线体验">
+  </a>
+</p>
+
 ---
 
 一个快速、注重隐私的在线图片压缩工具。支持 PNG、JPEG、WebP、AVIF 格式，高压缩率同时保持画质。

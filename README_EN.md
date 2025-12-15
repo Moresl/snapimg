@@ -7,6 +7,12 @@
 
 English | [中文](README.md)
 
+<p align="center">
+  <a href="https://img.biekanle.com/" target="_blank">
+    <img src="https://img.shields.io/badge/🚀 Live Demo-img.biekanle.com-blue?style=for-the-badge" alt="Live Demo">
+  </a>
+</p>
+
 ---
 
 A fast, privacy-focused online image compression tool. Supports PNG, JPEG, WebP, AVIF formats with high compression ratio while maintaining quality.
