@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.claude
 # C extensions
 *.so
 
@@ -128,6 +128,8 @@ test_images/output/
 *.jpg
 *.jpeg
 *.png
+!image.png
+!image-1.png
 *.webp
 *.bmp
 *.gif
