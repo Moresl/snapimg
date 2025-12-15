@@ -187,3 +187,7 @@ python main.py
 ### License
 
 [MIT License](LICENSE)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Moresl/snapimg,snapimg/snapimg&type=date&legend=top-left)](https://www.star-history.com/#Moresl/snapimg&snapimg/snapimg&type=date&legend=top-left)

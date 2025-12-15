@@ -199,7 +199,7 @@ function App() {
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button variant="ghost" size="icon" asChild>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/Moresl/snapimg" target="_blank" rel="noopener noreferrer">
                 <Github className="h-5 w-5" />
               </a>
             </Button>
