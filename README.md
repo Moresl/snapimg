@@ -1,101 +1,189 @@
-# 图片压缩工具 (Image Compressor)
+# SnapImg
 
-![License](https://img.shields.io/github/license/moresl/ImageMinify)
-![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
-![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![React](https://img.shields.io/badge/React-19-61dafb)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ed)
 
-[English](README_EN.md) | 中文
+[English](#english) | [中文](#中文)
 
-一个简单高效的图片压缩工具，支持多种格式，提供无损压缩选项，并具有批量处理和文件重命名功能。
+---
 
-## 功能特点
+## 中文
 
-- **多格式支持**：支持JPEG、PNG、WebP等常见图片格式
-- **批量处理**：可选择整个目录或特定图片文件进行压缩
-- **格式转换**：可将图片转换为JPEG、PNG或WebP格式
-- **无损压缩**：对PNG图像进行高效无损压缩
-- **文件重命名**：支持自定义前缀、分隔符和序号
-- **详细统计**：显示压缩前后的文件大小和压缩比例
-- **简洁界面**：简单易用的图形用户界面
+一个快速、注重隐私的在线图片压缩工具。支持 PNG、JPEG、WebP、AVIF 格式，高压缩率同时保持画质。
 
-## 截图
-![image](https://github.com/user-attachments/assets/a11d90d1-fff5-461e-aad1-2ea72c08778d)
+### 功能特点
 
-## 安装方法
+- **多格式支持** - 支持 PNG、JPEG、WebP、AVIF 格式输入输出
+- **高压缩率** - PNG 使用 pngquant/imagequant 算法，压缩率可达 70%+
+- **保持质量** - 智能压缩算法，最大程度保留图片质量
+- **本地处理** - 图片在服务器内存中处理，不保存到磁盘
+- **批量压缩** - 单次最多处理 20 张图片
+- **效果对比** - 滑动对比压缩前后效果
+- **深色模式** - 支持浅色/深色主题切换
 
-### 方法1：下载可执行文件
+### 截图
 
-1. 从[Releases](https://github.com/Moresl/ImageMinify/releases)页面下载最新版本的可执行文件
-2. 解压缩下载的文件
-3. 双击`图片压缩工具.exe`运行程序
+<!-- 添加项目截图 -->
+![alt text](image.png)
+![alt text](image-1.png)
+### 技术栈
 
-### 方法2：从源代码安装
+**前端：**
+- React 19 + TypeScript
+- Tailwind CSS + Shadcn UI
+- Vite
+
+**后端：**
+- FastAPI + Python
+- Pillow + imagequant + pngquant
+- 纯内存处理，无数据库
+
+### 快速开始
+
+#### Docker 部署（推荐）
 
 ```bash
-# 克隆仓库
-git clone https://github.com/Moresl/ImageMinify
-cd img-yasuo
+# 构建镜像
+docker build -t snapimg .
+
+# 运行容器
+docker run -d -p 80:80 --name snapimg snapimg
+```
+
+访问 http://localhost 即可使用。
+
+#### 本地开发
+
+**前端：**
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+**后端：**
+
+```bash
+cd serve
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # 安装依赖
 pip install -r requirements.txt
 
-# 运行程序
+# 启动服务
 python main.py
 ```
 
-## 使用方法
+### 项目结构
 
-1. **选择文件或目录**：
-   - 点击"选择目录"按钮选择包含图片的文件夹，或
-   - 点击"选择文件"按钮选择一个或多个图片文件
-
-2. **选择输出格式**：
-   - 保持原格式：保持原始格式但进行优化
-   - JPEG：转换为JPEG格式（可调整质量）
-   - PNG：转换为优化的PNG格式
-   - WebP：转换为WebP格式
-
-3. **调整设置**：
-   - 如果选择JPEG格式，可以调整质量滑块
-   - 如果需要重命名文件，勾选"启用重命名"并设置相关选项
-
-4. **开始压缩**：
-   - 点击"开始压缩"按钮开始处理
-   - 处理完成后，可以在表格中查看每个文件的压缩结果
-
-## 构建可执行文件
-
-```bash
-# 安装PyInstaller
-pip install pyinstaller
-
-# 运行构建脚本
-python build.py
+```
+snapimg/
+├── src/                    # 前端源码
+│   ├── components/         # React 组件
+│   │   ├── ui/            # Shadcn UI 组件
+│   │   ├── UploadZone.tsx
+│   │   └── ImageCompare.tsx
+│   ├── lib/               # 工具函数
+│   ├── App.tsx
+│   └── main.tsx
+├── serve/                  # 后端服务
+│   ├── app/
+│   │   ├── api/           # API 路由
+│   │   ├── core/          # 核心压缩逻辑
+│   │   └── models/        # 数据模型
+│   └── requirements.txt
+├── Dockerfile             # Docker 构建文件
+└── docker-compose.yml
 ```
 
-生成的可执行文件将位于`dist`目录中。
+### API 接口
 
-## 技术细节
+#### POST /api/compress/single
 
-- 使用PyQt5构建图形界面
-- 使用Pillow (PIL)进行图像处理
-- 对PNG图像使用高级压缩算法
-- 多线程处理，保持界面响应性
+压缩单张图片。
 
-## 贡献指南
+**请求：** `multipart/form-data`
+- `file`: 图片文件
+- `format`: 输出格式 (original/png/jpeg/webp/avif)
 
-欢迎贡献代码、报告问题或提出改进建议！请查看[贡献指南](CONTRIBUTING.md)了解详情。
+**响应：**
+```json
+{
+  "filename": "image.png",
+  "original_size": 1024000,
+  "compressed_size": 307200,
+  "compression_ratio": 70.0,
+  "format": "png",
+  "data": "data:image/png;base64,...",
+  "success": true
+}
+```
 
-## 许可证
+### 贡献
 
-本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件。
+欢迎贡献代码！请查看 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
 
-## 致谢
+### 许可证
 
-- [PyQt5](https://www.riverbankcomputing.com/software/pyqt/)
-- [Pillow](https://python-pillow.org/)
-- [PyInstaller](https://www.pyinstaller.org/)
+[MIT License](LICENSE)
 
-## Star History
+---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Moresl/ImageMinify&type=Date)](https://www.star-history.com/#Moresl/ImageMinify&Date)
+## English
+
+A fast, privacy-focused online image compression tool. Supports PNG, JPEG, WebP, AVIF formats with high compression ratio while maintaining quality.
+
+### Features
+
+- **Multi-format Support** - Input/output PNG, JPEG, WebP, AVIF formats
+- **High Compression** - PNG uses pngquant/imagequant algorithm, 70%+ compression ratio
+- **Quality Preserved** - Smart compression algorithm maintains image quality
+- **Local Processing** - Images processed in memory, never saved to disk
+- **Batch Processing** - Process up to 20 images at once
+- **Visual Comparison** - Slide to compare before/after compression
+- **Dark Mode** - Light/dark theme support
+
+### Quick Start
+
+#### Docker (Recommended)
+
+```bash
+# Build image
+docker build -t snapimg .
+
+# Run container
+docker run -d -p 80:80 --name snapimg snapimg
+```
+
+Visit http://localhost to use.
+
+#### Local Development
+
+**Frontend:**
+
+```bash
+npm install
+npm run dev
+```
+
+**Backend:**
+
+```bash
+cd serve
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+### License
+
+[MIT License](LICENSE)
