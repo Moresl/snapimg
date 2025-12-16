@@ -12,11 +12,11 @@ from typing import Tuple, Optional
 from PIL import Image, ImageFile
 from pathlib import Path
 
-# 可选依赖
+
 try:
     import pillow_avif
 except ImportError:
-    pass  # AVIF 支持可选
+    pass
 
 try:
     import mozjpeg_lossless_optimization
@@ -25,7 +25,7 @@ except ImportError:
     HAS_MOZJPEG = False
     print("[警告] mozjpeg-lossless-optimization 未安装，JPEG 将使用 Pillow 默认压缩")
 
-# imagequant - 与 libimagequant/pngquant 相同的量化算法
+
 try:
     import imagequant
     HAS_IMAGEQUANT = True
@@ -34,7 +34,7 @@ except ImportError:
     HAS_IMAGEQUANT = False
     print("[警告] imagequant 未安装，将使用备用方案")
 
-# zopfli - 更好的 deflate 压缩
+
 try:
     from zopfli.zopfli import compress as zopfli_compress
     HAS_ZOPFLI = True
@@ -43,7 +43,7 @@ except ImportError:
     HAS_ZOPFLI = False
     print("[警告] zopfli 未安装，将使用 zlib")
 
-# pypng - 自定义 PNG 编码
+
 try:
     import png
     HAS_PYPNG = True
@@ -52,17 +52,17 @@ except ImportError:
     HAS_PYPNG = False
     print("[警告] pypng 未安装，将使用 Pillow")
 
-# pngquant CLI 检测 (支持 Windows 本地和 Linux Docker)
+
 import shutil
 PNGQUANT_PATH = None
 HAS_PNGQUANT = False
 
-# 先检查本地 bin 目录 (Windows)
+
 local_pngquant = Path(__file__).parent.parent.parent / "bin" / "pngquant.exe"
 if local_pngquant.exists():
     PNGQUANT_PATH = local_pngquant
 else:
-    # 检查系统 PATH (Linux/Docker)
+
     system_pngquant = shutil.which("pngquant")
     if system_pngquant:
         PNGQUANT_PATH = Path(system_pngquant)
@@ -79,7 +79,7 @@ if PNGQUANT_PATH:
 if not HAS_PNGQUANT:
     print("[警告] pngquant 未找到，PNG 将使用 Pillow 压缩")
 
-# oxipng CLI 检测 (支持 Windows 本地和 Linux Docker)
+
 OXIPNG_PATH = None
 HAS_OXIPNG = False
 
@@ -100,7 +100,7 @@ if OXIPNG_PATH:
     except Exception:
         pass
 
-# 允许加载截断的图片
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
@@ -138,13 +138,13 @@ class AdvancedCompressor:
         original_size = os.path.getsize(input_path)
 
         with Image.open(input_path) as img:
-            # 获取原始格式
+
             original_format = img.format
             target_format = output_format or original_format
 
-            # 转换 RGBA 到 RGB（如果目标格式不支持透明度）
+
             if target_format in ['JPEG', 'JPG'] and img.mode in ['RGBA', 'LA', 'P']:
-                # 创建白色背景
+
                 background = Image.new('RGB', img.size, (255, 255, 255))
                 if img.mode == 'P':
                     img = img.convert('RGBA')
@@ -153,7 +153,7 @@ class AdvancedCompressor:
             elif img.mode not in ['RGB', 'RGBA']:
                 img = img.convert('RGBA' if target_format in ['PNG', 'WEBP', 'AVIF'] else 'RGB')
 
-            # 根据格式选择压缩策略
+
             if target_format == 'PNG':
                 self._compress_png(img, output_path, quality, use_pngquant)
             elif target_format in ['JPEG', 'JPG']:
@@ -177,20 +177,20 @@ class AdvancedCompressor:
             img.save(output_path, 'PNG', optimize=True, compress_level=9)
             return
 
-        # 保存为临时 PNG
+
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
             tmp_path = tmp.name
             img.save(tmp_path, 'PNG')
 
         try:
-            # 使用 pngquant 压缩 (与 wasm-image-compressor 相同设置)
-            # 不设置 --quality: 无质量限制，最大压缩
-            # --speed=1: 最慢但压缩效果最好
-            # --strip: 移除元数据
+
+
+
+
             result = subprocess.run([
                 str(PNGQUANT_PATH),
-                '254',  # 254色
-                '--speed=1',  # 最佳压缩
+                '254', 
+                '--speed=1',
                 '--strip',
                 '--force',
                 '--output', output_path,
@@ -217,8 +217,8 @@ class AdvancedCompressor:
             return
 
         try:
-            # -o 6: 最大压缩 (不用 zopfli)
-            # --strip all: 移除所有元数据
+
+
             result = subprocess.run([
                 str(OXIPNG_PATH),
                 '-o', '6',
@@ -244,29 +244,29 @@ class AdvancedCompressor:
         if not HAS_IMAGEQUANT:
             raise RuntimeError("imagequant not available")
 
-        # 确保是 RGBA 模式
+
         if img.mode != 'RGBA':
             img = img.convert('RGBA')
 
         width, height = img.size
         rgba_data = img.tobytes()
 
-        # 使用 imagequant 量化
+
         indexed_pixels, palette = imagequant.quantize_raw_rgba_bytes(
             rgba_data,
             width,
             height,
-            dithering_level=1.0,  # 高抖动保证颜色准确
+            dithering_level=1.0, 
             max_colors=max_colors,
             min_quality=70,
             max_quality=100
         )
 
-        # 快速模式跳过像素优化（影响很小）
+
         if not fast_mode:
             indexed_pixels = self._optimize_pixel_repetition(indexed_pixels, palette, width, height, threshold=10)
 
-        # 构建 PNG 文件
+
         png_data = self._build_png(width, height, palette, indexed_pixels, fast_mode=fast_mode)
         output_buffer.write(png_data)
 
@@ -285,20 +285,19 @@ class AdvancedCompressor:
         """NumPy 向量化版本 - 快速"""
         import numpy as np
 
-        # 构建调色板 RGB 数组
-        num_colors = len(palette) // 4
-        pal_rgb = np.array(palette, dtype=np.int32).reshape(-1, 4)[:, :3]  # (num_colors, 3)
 
-        # 像素数组
+        num_colors = len(palette) // 4
+        pal_rgb = np.array(palette, dtype=np.int32).reshape(-1, 4)[:, :3] 
+
         pixels = np.frombuffer(indexed_pixels, dtype=np.uint8).copy()
         pixels_2d = pixels.reshape(height, width)
 
-        # 逐行处理（向量化列方向）
+
         for y in range(height):
             row = pixels_2d[y]
             for x in range(1, width):
                 if row[x] != row[x-1]:
-                    # 计算颜色差异
+
                     c1 = pal_rgb[row[x]]
                     c2 = pal_rgb[row[x-1]]
                     diff = np.sum((c1 - c2) ** 2)
@@ -337,7 +336,7 @@ class AdvancedCompressor:
             tmp.write(png_data)
 
         try:
-            # -o 4: 平衡速度和压缩率
+
             result = subprocess.run([
                 str(OXIPNG_PATH),
                 '-o', '4',
@@ -369,43 +368,43 @@ class AdvancedCompressor:
         """
         output = io.BytesIO()
 
-        # PNG 签名
+
         output.write(b'\x89PNG\r\n\x1a\n')
 
-        # IHDR chunk
+
         ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 3, 0, 0, 0)
         self._write_chunk(output, b'IHDR', ihdr_data)
 
-        # PLTE chunk (调色板)
+
         num_colors = len(palette) // 4
         plte_data = bytes([palette[i * 4 + c] for i in range(num_colors) for c in range(3)])
         self._write_chunk(output, b'PLTE', plte_data)
 
-        # tRNS chunk (透明度)
+
         trns_data = bytes([palette[i * 4 + 3] for i in range(num_colors)])
         while trns_data and trns_data[-1] == 255:
             trns_data = trns_data[:-1]
         if trns_data:
             self._write_chunk(output, b'tRNS', trns_data)
 
-        # IDAT chunk (图像数据)
+
         raw_data = b''.join(
             b'\x00' + indexed_pixels[y * width:(y + 1) * width]
             for y in range(height)
         )
 
-        # 压缩选择
+
         if fast_mode or not HAS_ZOPFLI:
-            # 快速模式：使用 zlib (快 10x，压缩率低 ~10%)
+
             compressor = zlib.compressobj(9, zlib.DEFLATED, 15, 9)
             compressed = compressor.compress(raw_data) + compressor.flush()
         else:
-            # 最佳模式：使用 zopfli (慢但压缩率最高)
+
             compressed = zopfli_compress(raw_data, numiterations=15, gzip_mode=0)
 
         self._write_chunk(output, b'IDAT', compressed)
 
-        # IEND chunk
+
         self._write_chunk(output, b'IEND', b'')
 
         return output.getvalue()
@@ -438,7 +437,7 @@ class AdvancedCompressor:
 
     def _compress_jpeg(self, img: Image.Image, output_path: str, quality: int):
         """JPEG 压缩 - 使用 MozJPEG 优化"""
-        # 先用 Pillow 保存
+
         buffer = io.BytesIO()
         img.save(
             buffer,
@@ -451,7 +450,7 @@ class AdvancedCompressor:
 
         jpeg_bytes = buffer.getvalue()
 
-        # 使用 MozJPEG 进一步优化
+
         if HAS_MOZJPEG:
             try:
                 jpeg_bytes = mozjpeg_lossless_optimization.optimize(jpeg_bytes)
@@ -459,7 +458,7 @@ class AdvancedCompressor:
             except Exception as e:
                 print(f"[JPEG压缩] MozJPEG 优化失败: {e}")
 
-        # 写入文件
+
         with open(output_path, 'wb') as f:
             f.write(jpeg_bytes)
 
@@ -469,7 +468,7 @@ class AdvancedCompressor:
             output_path,
             'WEBP',
             quality=quality,
-            method=6,  # 最慢但压缩最好
+            method=6, 
             lossless=False
         )
 
@@ -479,7 +478,7 @@ class AdvancedCompressor:
             output_path,
             'AVIF',
             quality=quality,
-            speed=0  # 最慢但压缩最好
+            speed=0 
         )
 
 
@@ -494,36 +493,32 @@ class AdvancedCompressor:
             最佳格式 (AVIF/WebP/JPEG/PNG)
         """
         with Image.open(input_path) as img:
-            # 检查是否有透明通道
+
             has_alpha = img.mode in ['RGBA', 'LA', 'P'] and (
                 img.mode != 'P' or 'transparency' in img.info
             )
 
-            # 如果有透明通道，优先使用支持透明的格式
-            if has_alpha:
-                return 'AVIF'  # AVIF 支持透明且压缩率最高
 
-            # 分析图片复杂度
-            # 简单图片（如图标、logo）用 PNG
-            # 复杂图片（如照片）用 AVIF/JPEG
+            if has_alpha:
+                return 'AVIF'
             if self._is_simple_image(img):
                 return 'PNG'
             else:
-                return 'AVIF'  # AVIF 对照片压缩效果最好
+                return 'AVIF' 
 
     def _is_simple_image(self, img: Image.Image) -> bool:
         """判断是否为简单图片（图标、logo等）"""
-        # 简单启发式：如果颜色数量少，认为是简单图片
+
         if img.mode == 'P':
             return True
 
-        # 采样部分像素来估计颜色数量
+
         width, height = img.size
-        if width * height < 100000:  # 小图片直接分析
+        if width * height < 100000: 
             colors = len(set(list(img.getdata())))
             return colors < 256
         else:
-            # 大图片采样
+
             img_small = img.resize((100, 100), Image.Resampling.LANCZOS)
             colors = len(set(list(img_small.getdata())))
             return colors < 100
@@ -549,7 +544,7 @@ class AdvancedCompressor:
         if target_format == 'JPG':
             target_format = 'JPEG'
 
-        # PNG 使用 imagequant 或 pngquant CLI
+
         if target_format == 'PNG' and (HAS_IMAGEQUANT or HAS_PNGQUANT):
             success = self._compress_png_raw(original_bytes, output_buffer)
             if success:
@@ -557,10 +552,10 @@ class AdvancedCompressor:
                 ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
                 return compressed_size, ratio
 
-        # 其他格式或 PNG 失败时用 PIL
+
         input_buffer.seek(0)
         with Image.open(input_buffer) as img:
-            # 转换模式
+
             if target_format == 'JPEG' and img.mode in ['RGBA', 'LA', 'P']:
                 background = Image.new('RGB', img.size, (255, 255, 255))
                 if img.mode == 'P':
@@ -573,7 +568,7 @@ class AdvancedCompressor:
             elif img.mode not in ['RGB', 'RGBA']:
                 img = img.convert('RGBA' if target_format in ['PNG', 'WEBP'] else 'RGB')
 
-            # 压缩
+
             if target_format == 'PNG':
                 self._compress_png_memory(img, output_buffer, quality)
             elif target_format == 'JPEG':
@@ -592,7 +587,7 @@ class AdvancedCompressor:
         """
         PNG 压缩 - 优先使用 imagequant + zlib (与 wasm-image-compressor 相同算法)
         """
-        # 优先使用 imagequant (与 wasm-image-compressor 相同算法)
+
         if HAS_IMAGEQUANT:
             try:
                 with Image.open(io.BytesIO(png_bytes)) as img:
@@ -603,7 +598,7 @@ class AdvancedCompressor:
             except Exception as e:
                 print(f"[PNG压缩] imagequant 失败: {e}")
 
-        # 回退到 pngquant CLI
+
         if HAS_PNGQUANT:
             with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_in:
                 tmp_in_path = tmp_in.name
@@ -641,7 +636,7 @@ class AdvancedCompressor:
     def _compress_png_memory(self, img: Image.Image, output_buffer: io.BytesIO, quality: int):
         """PNG 内存压缩 - 优先使用 imagequant"""
 
-        # 优先使用 imagequant (与 wasm-image-compressor 相同算法)
+
         if HAS_IMAGEQUANT:
             try:
                 self._compress_png_imagequant(img, output_buffer, max_colors=254, fast_mode=False)
@@ -650,7 +645,7 @@ class AdvancedCompressor:
             except Exception as e:
                 print(f"[PNG压缩] imagequant 失败: {e}")
 
-        # 回退到 pngquant CLI
+
         if HAS_PNGQUANT:
             with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_in:
                 tmp_in_path = tmp_in.name
@@ -682,7 +677,7 @@ class AdvancedCompressor:
                     except Exception:
                         pass
 
-        # 最后回退到 Pillow
+
         self._compress_png_pillow_memory(img, output_buffer, 254)
 
     def _compress_png_pillow_memory(self, img: Image.Image, output_buffer: io.BytesIO, max_colors: int):

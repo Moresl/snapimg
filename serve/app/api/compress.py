@@ -19,7 +19,7 @@ compressor = AdvancedCompressor()
 @router.post("/compress", response_model=CompressResult)
 async def compress_single_image(
     file: UploadFile = File(...),
-    output_format: str = None  # 可选输出格式: png, webp, jpeg
+    output_format: str = None  
 ):
     """压缩单个图片，支持格式转换"""
     try:
@@ -54,7 +54,7 @@ async def compress_single_image(
         input_buffer = io.BytesIO(content)
         output_buffer = io.BytesIO()
 
-        # 使用指定格式或保持原格式
+
         target_format = output_format if output_format else file_ext[1:]
         compressed_size, ratio = compressor.compress_in_memory(
             input_buffer,
@@ -111,7 +111,7 @@ async def compress_batch_images(files: List[UploadFile] = File(...)):
 
     for file in files:
         try:
-            # 验证文件类型
+
             file_ext = Path(file.filename).suffix.lower()
             if file_ext not in settings.ALLOWED_EXTENSIONS:
                 results.append(CompressResult(
@@ -127,11 +127,11 @@ async def compress_batch_images(files: List[UploadFile] = File(...)):
                 failed_count += 1
                 continue
 
-            # 读取文件到内存
+
             content = await file.read()
             original_size = len(content)
 
-            # 检查文件大小
+
             if original_size > settings.MAX_FILE_SIZE:
                 results.append(CompressResult(
                     filename=file.filename,
@@ -146,22 +146,22 @@ async def compress_batch_images(files: List[UploadFile] = File(...)):
                 failed_count += 1
                 continue
 
-            # 内存中压缩
+
             input_buffer = io.BytesIO(content)
             output_buffer = io.BytesIO()
 
-            target_format = file_ext[1:]  # 去掉点号
+            target_format = file_ext[1:]
             compressed_size, ratio = compressor.compress_in_memory(
                 input_buffer,
                 output_buffer,
                 target_format
             )
 
-            # 转为 base64
+
             output_buffer.seek(0)
             base64_data = base64.b64encode(output_buffer.read()).decode('utf-8')
 
-            # 确定 MIME 类型
+
             mime_map = {
                 'png': 'image/png',
                 'jpg': 'image/jpeg',
@@ -198,7 +198,7 @@ async def compress_batch_images(files: List[UploadFile] = File(...)):
             ))
             failed_count += 1
 
-    # 计算总压缩率
+
     total_ratio = 0
     if total_original_size > 0:
         total_ratio = (1 - total_compressed_size / total_original_size) * 100

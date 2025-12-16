@@ -9,14 +9,14 @@ def get_local_ips():
     """获取本机所有 IP 地址"""
     ips = []
     try:
-        # 获取主机名对应的 IP
+
         hostname = socket.gethostname()
         ips.append(socket.gethostbyname(hostname))
     except:
         pass
 
     try:
-        # 获取所有网络接口的 IP
+
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             ip = info[4][0]
             if ip not in ips and not ip.startswith('127.'):
@@ -24,7 +24,7 @@ def get_local_ips():
     except:
         pass
 
-    # 尝试通过连接外部获取本机 IP
+
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -57,6 +57,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=PORT,
         reload=True,
-        reload_dirs=["app"],  # 只监听 app 目录
-        log_level="warning"   # 减少日志输出
+        reload_dirs=["app"], 
+        log_level="warning"  
     )

@@ -26,14 +26,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API 路由
+
 app.include_router(compress.router, prefix="/api", tags=["压缩"])
 
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
 
-# 静态文件服务 (Docker 部署时使用)
+
 STATIC_DIR = None
 possible_paths = [
     Path(__file__).parent.parent / "static",

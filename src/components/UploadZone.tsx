@@ -1,15 +1,15 @@
+import { cn } from '@/lib/utils'
 import { Upload } from 'lucide-react'
 import { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { Button } from './ui/button'
-import { cn } from '@/lib/utils'
 
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void
   disabled?: boolean
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024 
 const MAX_FILES = 20
 const ACCEPTED_TYPES = {
   'image/png': ['.png'],
