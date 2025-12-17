@@ -189,7 +189,7 @@ class AdvancedCompressor:
 
             result = subprocess.run([
                 str(PNGQUANT_PATH),
-                '254', 
+                '254',
                 '--speed=1',
                 '--strip',
                 '--force',
@@ -256,15 +256,11 @@ class AdvancedCompressor:
             rgba_data,
             width,
             height,
-            dithering_level=1.0, 
+            dithering_level=1.0,
             max_colors=max_colors,
             min_quality=70,
             max_quality=100
         )
-
-
-        if not fast_mode:
-            indexed_pixels = self._optimize_pixel_repetition(indexed_pixels, palette, width, height, threshold=10)
 
 
         png_data = self._build_png(width, height, palette, indexed_pixels, fast_mode=fast_mode)
