@@ -36,8 +36,14 @@
 - **效果对比** - 滑动对比压缩前后效果
 - **深色模式** - 支持浅色/深色主题切换
 
+## 压缩原理
+
+<p align="center">
+  <img src="image3.png" width="50%" alt="压缩原理">
+</p>
+
 ## 截图
-![动漫解释](image3.png)
+
 ![主界面](image.png)
 ![压缩效果](image-1.png)
 
