@@ -29,6 +29,8 @@ A fast, privacy-focused online image compression tool. Supports PNG, JPEG, WebP,
 
 ## Screenshots
 
+
+<img src="image3.png" alt="动漫解释" style="zoom:50%;" />
 ![Main Interface](image.png)
 ![Compression Result](image-1.png)
 
