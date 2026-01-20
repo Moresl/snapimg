@@ -30,7 +30,7 @@ A fast, privacy-focused online image compression tool. Supports PNG, JPEG, WebP,
 ## How It Works
 
 <p align="center">
-  <img src="image3.png" width="50%" alt="How It Works">
+  <img src="image3.png" width="60%" alt="How It Works">
 </p>
 
 ## Screenshots

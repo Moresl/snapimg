@@ -39,7 +39,7 @@
 ## 压缩原理
 
 <p align="center">
-  <img src="image3.png" width="50%" alt="压缩原理">
+  <img src="image3.png" width="60%" alt="压缩原理">
 </p>
 
 ## 截图
