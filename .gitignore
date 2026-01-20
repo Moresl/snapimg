@@ -130,6 +130,7 @@ test_images/output/
 *.png
 !image.png
 !image-1.png
+!image3.png
 *.webp
 *.bmp
 *.gif
