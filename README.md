@@ -37,7 +37,7 @@
 - **深色模式** - 支持浅色/深色主题切换
 
 ## 截图
-<img src="image3.png" alt="动漫解释" style="zoom:50%;" />
+![动漫解释](image3.png)
 ![主界面](image.png)
 ![压缩效果](image-1.png)
 
